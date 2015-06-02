@@ -1,0 +1,19 @@
+---
+- name: Add nginx repository
+  apt_repository: repo='ppa:nginx/stable' state=present
+  register: nginx_ppa
+
+- name: Install Nginx
+  apt: pkg=nginx state=installed
+  when: nginx_ppa|success
+  register: nginx_installed
+
+- name: Add Nginx config
+  when: nginx_installed|success
+  copy: src=nginx.conf dest=/etc/nginx owner=root group=root
+
+- name: Add user to www-data group
+  when: nginx_installed|success
+  user: name={{ ansible_ssh_user }} groups='www-data' append=yes
+  notify:
+    - Start Nginx

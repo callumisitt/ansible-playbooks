@@ -1,0 +1,16 @@
+---
+- hosts: local
+  sudo: true
+  roles:
+    - common
+    - nginx
+    - passenger
+    # - puma
+    - ruby
+    # - php
+    - newrelic
+    - varnish
+    - { role: mysql, when: 'mysql_password is defined' }
+    - backup
+    - monit
+    - postfix

@@ -1,0 +1,14 @@
+---
+- name: Create Puma Jungle Config
+  file: path=/etc/puma.conf state=touch
+
+- name: Copy Puma Upstart Service (Puma)
+  template: src=puma.conf.j2 dest=/etc/init/puma.conf
+
+- name: Copy Puma Upstart Service (Puma Manager)
+  copy: src=puma-manager.conf dest=/etc/init
+  register: upstart
+
+- name: Start Puma Manager
+  when: upstart|success
+  service: name=puma-manager state=started

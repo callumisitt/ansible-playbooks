@@ -1,0 +1,20 @@
+---
+- name: Install PHP
+  apt: pkg=php5-fpm state=installed
+  register: installphp
+
+- name: Install PHP Extensions
+  apt: pkg={{item}} state=installed
+  with_items:
+    - php5-mysql
+    - php5-curl
+    - php5-gd
+
+- name: Set fix path info
+  when: installphp|success
+  replace: dest=/etc/php5/fpm/php.ini regexp='cg.fix_pathinfo=\d' replace='cgi.fix_pathinfo=0'
+
+- name: Set PHP socket listener
+  when: installphp|success
+  replace: dest=/etc/php5/fpm/pool.d/www.conf regexp='listen = 127.0.0.1:9000' replace='listen = /var/run/php5-fpm.sock'
+  notify: Restart PHP

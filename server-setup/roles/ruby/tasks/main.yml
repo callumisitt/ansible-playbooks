@@ -1,0 +1,26 @@
+---
+- name: Add Brightbox Ruby repository
+  apt_repository: repo='ppa:brightbox/ruby-ng' state=present
+  register: ruby_ppa
+
+- name: Install Ruby
+  when: ruby_ppa|success
+  apt: pkg={{item}} state=installed
+  with_items:
+    - ruby{{version}}
+    - ruby{{version}}-dev
+
+- name: Set default app env
+  replace: dest=/etc/nginx/nginx.conf regexp='#(passenger_app_env.*)$' replace='\1'
+
+- name: Get Ruby root
+  shell: which ruby
+  register: ruby_root
+
+- name: Set Passenger Ruby
+  replace: dest=/etc/nginx/nginx.conf regexp='#passenger_ruby.*$' replace='passenger_ruby {{ruby_root.stdout}};'
+  notify:
+    - Reload Nginx
+
+- name: Install bundler gem
+  gem: name=bundler state=latest user_install=no

@@ -1,0 +1,8 @@
+---
+- name: Install Postfix
+  apt: pkg=postfix state=installed
+  register: postfix_installed
+
+- name: Add Postfix config
+  when: postfix_installed|success
+  template: src=main.cf.j2 dest=/etc/postfix owner=root group=root

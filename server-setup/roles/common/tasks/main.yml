@@ -1,0 +1,65 @@
+---
+- name: Upgrade system packages
+  apt: upgrade=full
+
+- name: Install base packages
+  apt: pkg={{item}} state=installed update_cache=true
+  register: base_packages
+  with_items:
+    - build-essential
+    - python-apt
+    - libssl-dev
+    - libcurl4-openssl-dev
+    - libxml2-dev
+    - mysql-client
+    - libmysqlclient-dev
+    - libxslt-dev
+    - imagemagick
+    - git
+    - unattended-upgrades
+    - ntp
+    - iotop
+
+- name: Configure unattended upgrades
+  when: base_packages|success
+  copy: >
+      src=20auto-upgrades dest=/etc/apt/apt.conf.d/20auto-upgrades
+      owner=root group=root mode=0644
+
+- name: Configure timezone
+  when: base_packages|success
+  register: timezone_copied
+  copy: >
+      src=timezone dest=/etc/timezone
+      owner=root group=root mode=0644
+      
+- name: Configure timezone
+  when: timezone_copied|success
+  command: dpkg-reconfigure --frontend noninteractive tzdata
+
+# - name: Allocate swap
+#   command: fallocate -l 4G /swapfile
+#
+# - name: Set permissions on swap
+#   file: path=/swapfile owner=root group=root mode=0600
+#
+# - name: Enable swap
+#   command: "{{item}} /swapfile"
+#   with_items:
+#     - mkswap
+#     - swapon
+#
+# - name: Persist swap on reboot
+#   lineinfile: dest=/etc/fstab line="/swapfile   none    swap    sw    0   0"
+#
+# - name: Configure swap
+#   command: "sysctl {{item}}"
+#   with_items:
+#     - vm.swappiness=10
+#     - vm.vfs_cache_pressure=50
+#
+# - name: Persist swap config on reboot
+#   lineinfile: dest=/etc/fstab line="{{item}}"
+#   with_items:
+#     - "vm.swappiness = 10"
+#     - "vm.vfs_cache_pressure = 50"

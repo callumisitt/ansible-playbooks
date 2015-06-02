@@ -1,0 +1,23 @@
+---
+- name: Install HTTPS
+  apt: pkg=apt-transport-https
+  register: https  
+
+- name: Add Varnish PPG Key
+  apt_key: url=https://repo.varnish-cache.org/ubuntu/GPG-key.txt
+  when: https|success
+  register: varnish_ppg  
+
+- name: Add Varnish repository
+  apt_repository: repo='deb https://repo.varnish-cache.org/ubuntu/ trusty varnish-4.0' state=present
+  when: https|success and varnish_ppg|success
+  register: varnish_apt  
+
+- name: Update APT cache
+  apt: update_cache=yes
+  register: update_cache
+
+- name: Install Varnish
+  when: https|success and varnish_ppg|success and update_cache|success
+  apt: pkg=varnish state=installed
+  register: varnish

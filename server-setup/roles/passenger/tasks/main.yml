@@ -1,0 +1,34 @@
+---
+- name: Add Phusion PGP key
+  apt_key: keyserver=keyserver.ubuntu.com id=561F9B9CAC40B2F7
+  register: pgpkey
+
+- name: Add HTTPS support for APT
+  apt: pkg={{item}} state=installed
+  with_items:
+    - apt-transport-https
+    - ca-certificates
+
+- name: Add APT source
+  template: src=passenger.list.j2 dest=/etc/apt/sources.list.d/passenger.list owner=root group=root mode=600
+
+- name: Update APT cache
+  apt: update_cache=yes
+
+- name: Install Passenger
+  apt: pkg={{item}} state=installed
+  with_items:
+    - nginx-extras
+    - passenger
+
+- name: Get Passenger root
+  shell: /usr/bin/passenger-config --root
+  register: passenger_root
+
+- name: Set Passenger root
+  replace: dest=/etc/nginx/nginx.conf regexp='#passenger_root.*$' replace='passenger_root {{passenger_root.stdout}};'
+
+- name: Set Passenger paths
+  replace: dest=/etc/nginx/nginx.conf regexp='#(passenger_env_var PATH.*)$' replace='\1'
+  notify:
+    - Restart Nginx
