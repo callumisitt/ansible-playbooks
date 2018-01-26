@@ -1,3 +1,0 @@
----
-- name: Start NewRelic
-  service: name=newrelic-sysmond state=started
